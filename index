@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Benidorm Gonzi</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --azul:#22497A;--azul-mid:#2d5a94;--azul-claro:#e8f0fb;
+  --rojo:#c0392b;--gris-bg:#f2f5fa;--gris-borde:#d8e2f0;
+  --texto:#1a1a2e;--gris:#6b7a99;--verde-ok:#16a34a;--verde-bg:#dcfce7;
+  --amarillo:#d97706;--amarillo-bg:#fef3c7;--rojo-sem:#dc2626;--rojo-bg:#fee2e2;
+  --radio:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--gris-bg);color:var(--texto);min-height:100vh;}
+.header{background:var(--azul);padding:0 24px;display:flex;align-items:center;height:60px;box-shadow:0 2px 12px rgba(34,73,122,.25);}
+.logo-b{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-family:'Montserrat',sans-serif;font-size:18px;font-weight:900;color:#fff;margin-right:14px;flex-shrink:0;}
+.header-title{font-family:'Montserrat',sans-serif;font-size:16px;font-weight:900;color:#fff;letter-spacing:1px;text-transform:uppercase;}
+.header-gonzi{font-size:10px;color:rgba(255,255,255,.55);letter-spacing:2px;text-transform:uppercase;margin-top:1px;}
+.contenido{max-width:1280px;margin:0 auto;padding:20px 20px 48px;}
+.tabs{display:flex;gap:4px;margin-bottom:18px;flex-wrap:wrap;}
+.tab{padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:2px solid var(--gris-borde);background:#fff;color:var(--gris);font-family:'Montserrat',sans-serif;transition:all .15s;}
+.tab.activo{background:var(--azul);color:#fff;border-color:var(--azul);}
+.filtro-mes{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+.filtro-mes label{font-size:12px;font-weight:600;color:var(--gris);font-family:'Montserrat',sans-serif;text-transform:uppercase;letter-spacing:.5px;}
+.filtro-mes select{padding:7px 12px;border:2px solid var(--gris-borde);border-radius:8px;font-size:13px;color:var(--texto);background:#fff;cursor:pointer;outline:none;font-family:'DM Sans',sans-serif;}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:18px;}
+.kpi{background:#fff;border-radius:var(--radio);padding:18px 20px;box-shadow:0 1px 4px rgba(34,73,122,.08);border-left:4px solid var(--azul);}
+.kpi-label{font-size:10px;color:var(--gris);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;font-family:'Montserrat',sans-serif;font-weight:600;}
+.kpi-valor{font-family:'Montserrat',sans-serif;font-size:20px;font-weight:700;color:var(--azul);line-height:1;}
+.kpi-comp{font-size:11px;color:var(--gris);margin-top:5px;}
+.kpi-comp.sube{color:var(--verde-ok);font-weight:600;}
+.kpi-comp.baja{color:var(--rojo-sem);font-weight:600;}
+.seccion{background:#fff;border-radius:var(--radio);padding:20px 22px;margin-bottom:18px;box-shadow:0 1px 4px rgba(34,73,122,.08);}
+.seccion-titulo{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:var(--azul);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--azul-claro);}
+.leyenda{display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap;}
+.leyenda-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gris);}
+.leyenda-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.grafico-wrap{overflow-x:auto;}
+.grafico-barras{display:flex;align-items:flex-end;gap:6px;height:180px;min-width:500px;padding:20px 0 0;}
+.grupo-barra{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;}
+.barras-duo{display:flex;align-items:flex-end;gap:2px;width:100%;}
+.barra{flex:1;border-radius:3px 3px 0 0;min-height:2px;position:relative;}
+.barra.fact{background:var(--azul);}
+.barra.fact.activo{background:#1a5fa8;}
+.barra.gan{background:var(--rojo);opacity:.7;}
+.barra.gan.activo{opacity:1;}
+.barra.cajas{background:#d4a514;opacity:.75;}
+.barra.cajas.activo{opacity:1;}
+.barra-monto{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:700;white-space:nowrap;color:var(--texto);}
+.barra-label{font-size:9px;color:var(--gris);text-align:center;}
+.tabla-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead tr{background:var(--azul);}
+thead th{padding:9px 11px;text-align:center;font-weight:600;font-size:10px;white-space:nowrap;color:#fff;font-family:'Montserrat',sans-serif;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;user-select:none;}
+thead th:first-child{text-align:left;position:sticky;left:0;background:var(--azul);z-index:2;}
+thead th:hover{background:var(--azul-mid);}
+thead th.sort-asc::after{content:' ▲';font-size:9px;}
+thead th.sort-desc::after{content:' ▼';font-size:9px;}
+tbody tr{border-bottom:1px solid var(--gris-borde);transition:background .1s;}
+tbody tr:hover{background:var(--azul-claro);}
+tbody td{padding:8px 11px;text-align:center;white-space:nowrap;font-size:12px;}
+tbody td:first-child{text-align:left;font-weight:500;position:sticky;left:0;background:#fff;z-index:1;}
+tbody tr:hover td:first-child{background:var(--azul-claro);}
+.td-val{color:var(--azul);font-weight:600;}
+.td-cero{color:#d1d5db;font-size:11px;}
+.fila-activa{background:var(--azul-claro)!important;font-weight:600;}
+.sem{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;font-family:'Montserrat',sans-serif;}
+.sem.verde{background:var(--verde-bg);color:var(--verde-ok);}
+.sem.amarillo{background:var(--amarillo-bg);color:var(--amarillo);}
+.sem.rojo{background:var(--rojo-bg);color:var(--rojo-sem);}
+.btn-wa{background:#25d366;color:#fff;border:none;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;font-weight:600;}
+.btn-wa:hover{background:#1ea952;}
+.mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mobile-card{background:#fff;border-radius:14px;padding:20px 18px;box-shadow:0 2px 8px rgba(34,73,122,.1);border-top:4px solid var(--azul);position:relative;overflow:hidden;}
+.mobile-card.verde{border-top-color:var(--verde-ok);}
+.mobile-card.rojo{border-top-color:var(--rojo);}
+.mobile-card.amarillo{border-top-color:var(--amarillo);}
+.mobile-card-icon{position:absolute;right:14px;top:14px;font-size:24px;opacity:.2;}
+.mobile-card-label{font-size:10px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:1px;font-family:'Montserrat',sans-serif;margin-bottom:6px;}
+.mobile-card-valor{font-family:'Montserrat',sans-serif;font-size:22px;font-weight:900;color:var(--azul);line-height:1;margin-bottom:6px;}
+.mobile-card.verde .mobile-card-valor{color:var(--verde-ok);}
+.mobile-card.rojo .mobile-card-valor{color:var(--rojo);}
+.mobile-card.amarillo .mobile-card-valor{color:var(--amarillo);}
+.mobile-card-comp{font-size:11px;font-weight:600;}
+.mobile-card-comp.sube{color:var(--verde-ok);}
+.mobile-card-comp.baja{color:var(--rojo-sem);}
+.mobile-mes{text-align:center;font-family:'Montserrat',sans-serif;font-size:13px;color:var(--gris);margin-bottom:16px;font-weight:600;}
+.loading{text-align:center;padding:60px;color:var(--gris);}
+.spinner{width:32px;height:32px;border:3px solid var(--gris-borde);border-top-color:var(--azul);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@media(max-width:700px){
+  .kpis{grid-template-columns:repeat(2,1fr);}
+  .kpi-valor{font-size:16px;}
+  .tabs .tab{padding:7px 12px;font-size:11px;}
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo-b">B</div>
+  <div>
+    <div class="header-title">Benidorm</div>
+    <div class="header-gonzi">Panel de Gonzi</div>
+  </div>
+</div>
+<div class="contenido">
+  <div class="tabs">
+    <div class="tab activo" onclick="mostrarTab('mobile')">📱 KPIs</div>
+    <div class="tab" onclick="mostrarTab('graficos')">📊 Evolutivo</div>
+    <div class="tab" onclick="mostrarTab('analitico')">📋 Analítico</div>
+  </div>
+  <div id="tab-graficos" style="display:none"></div>
+  <div id="tab-analitico" style="display:none"></div>
+  <div id="tab-mobile"><div class="loading"><div class="spinner"></div><p>Cargando datos...</p></div></div>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbzBHgo95jJE6CAinxgPa8ooExf4TKJg2VOvRmGDk25JgCX0mGRznGG-xRH9o3c--t1O/exec';
+const WA_NUM   = '5491134165086';
+let D = null, MES_SEL = null;
+let sortCol = -1, sortDir = 1;
+
+function esperar(ms) {
+  return new Promise(function(resolve) { setTimeout(resolve, ms); });
+}
+
+async function pedirDatosDashboard(pin, intentos) {
+  intentos = intentos || 3;
+  var ultimoError = null;
+  for (var i = 0; i < intentos; i++) {
+    try {
+      var r = await fetch(API_URL, {
+        method: 'POST',
+        body: new URLSearchParams({ action: 'dashboard', pin: pin })
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var data = await r.json();
+      if (data.error) throw new Error(data.error);
+      return data;
+    } catch (e) {
+      ultimoError = e;
+      if (i < intentos - 1) await esperar(800 * (i + 1));
+    }
+  }
+  throw ultimoError;
+}
+
+window.onload = async function() {
+  try {
+    var pin = localStorage.getItem('benidorm_dash_pin');
+    if (!pin) {
+      pin = prompt('Ingresá tu PIN del dashboard:');
+      if (!pin) {
+        document.getElementById('tab-graficos').innerHTML =
+          `<div style="color:var(--rojo);padding:20px;background:#fff;border-radius:10px">Necesitás un PIN para ver el dashboard.</div>`;
+        return;
+      }
+    }
+
+    var datos;
+    try {
+      datos = await pedirDatosDashboard(pin);
+    } catch (e) {
+      if (e.message === 'PIN incorrecto') {
+        localStorage.removeItem('benidorm_dash_pin');
+        document.getElementById('tab-graficos').innerHTML =
+          `<div style="color:var(--rojo);padding:20px;background:#fff;border-radius:10px">PIN incorrecto. Recargá la página para intentar de nuevo.</div>`;
+        return;
+      }
+      throw e;
+    }
+
+    localStorage.setItem('benidorm_dash_pin', pin);
+
+    D = datos;
+    MES_SEL = D.mesActual.mes;
+    renderGraficos();
+    renderAnalitico();
+    renderMobile();
+  } catch(e) {
+    document.getElementById('tab-graficos').innerHTML =
+      `<div style="color:var(--rojo);padding:20px;background:#fff;border-radius:10px">
+        <strong>Error al cargar datos:</strong> ${e.message}
+      </div>`;
+  }
+};
+
+function mostrarTab(t) {
+  ['graficos','analitico','mobile'].forEach(id=>document.getElementById('tab-'+id).style.display=id===t?'':'none');
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('activo',['mobile','graficos','analitico'][i]===t));
+}
+
+// ══ TAB GRÁFICOS ══
+let sortColMes = -1, sortDirMes = 1;
+let sortColCli2 = -1, sortDirCli2 = 1;
+let mesFiltro = null;
+
+function renderGraficos(colMes, dirMes, colCli, dirCli, mesClick) {
+  if (colMes !== undefined) { sortColMes = colMes; sortDirMes = dirMes; }
+  if (colCli !== undefined) { sortColCli2 = colCli; sortDirCli2 = dirCli; }
+  if (mesClick !== undefined) { mesFiltro = (mesFiltro === mesClick) ? null : mesClick; }
+
+  let totFact=0, totPed=0, totCajas=0, totGA=0;
+  const COLS_MES = [
+    {label:'Mes',       fn:(m,i)=>m, num:false},
+    {label:'Facturado', fn:(m,i)=>D.facturado[i]||0, num:true},
+    {label:'Q Pedidos', fn:(m,i)=>D.pedidosPorMes[i]||0, num:true},
+    {label:'Q Cajas',   fn:(m,i)=>D.cajasPorMes[i]||0, num:true},
+    {label:'GA $',      fn:(m,i)=>D.ganancia[i]||0, num:true},
+  ];
+
+  let mesesIdx = D.meses.map((m,i)=>i).reverse();
+  if (sortColMes >= 0) {
+    mesesIdx.sort((ia,ib)=>{
+      const va=COLS_MES[sortColMes].fn(D.meses[ia],ia), vb=COLS_MES[sortColMes].fn(D.meses[ib],ib);
+      if (typeof va === 'number') return (va-vb)*sortDirMes;
+      return va.toString().localeCompare(vb.toString())*sortDirMes;
+    });
+  }
+
+  const filasMes = mesesIdx.map(i=>{
+    const m=D.meses[i], f=D.facturado[i]||0, p=D.pedidosPorMes[i]||0, c=D.cajasPorMes[i]||0, g=D.ganancia[i]||0;
+    totFact+=f; totPed+=p; totCajas+=c; totGA+=g;
+    const ac = (mesFiltro===m) ? 'fila-activa' : '';
+    return `<tr class="${ac}" style="cursor:pointer" onclick="renderGraficos(undefined,undefined,undefined,undefined,'${m}')"><td>${fml(m)}</td><td>${pf(f)}</td><td>${p}</td><td>${c}</td><td>${pf(g)}</td></tr>`;
+  }).join('');
+  const filaTotalMes = `<tr style="font-weight:700;border-top:2px solid var(--azul)"><td>Suma total</td><td>${pf(totFact)}</td><td>${totPed}</td><td>${totCajas}</td><td>${pf(totGA)}</td></tr>`;
+
+  const theadMes = COLS_MES.map((c,i)=>{
+    let cls = sortColMes===i ? (sortDirMes===1?'sort-asc':'sort-desc') : '';
+    return `<th class="${cls}" onclick="renderGraficos(${i},${sortColMes===i?-sortDirMes:1})">${c.label}</th>`;
+  }).join('');
+
+  const COLS_CLI = [
+    {label:'Cliente',     fn:c=>c.nombre, num:false},
+    {label:'$ Facturado', fn:c=>c._monto, num:true},
+    {label:'Q Pedidos',   fn:c=>c._pedidos, num:true},
+    {label:'Q Cajas',     fn:c=>c._cajas, num:true},
+    {label:'Pedido Prom', fn:c=>c._promMonto, num:true},
+    {label:'GA',          fn:c=>c._ga, num:true},
+  ];
+
+  let clientesCalc = D.clientes.map(c=>{
+    if (mesFiltro) {
+      const monto = c.montoPorMes[mesFiltro] || 0;
+      const cajas = c.cajasPorMes[mesFiltro] || 0;
+      const ga    = c.gaPorMes[mesFiltro] || 0;
+      const peds  = c.remitosPorMes[mesFiltro] || 0;
+      return { ...c, _monto:monto, _cajas:cajas, _ga:ga, _pedidos:peds, _promMonto: peds>0?Math.round(monto/peds):0 };
+    }
+    return { ...c, _monto:c.totalMonto, _cajas:c.totalCajas, _ga:c.totalGA, _pedidos:c.nPedidos, _promMonto:c.promMonto };
+  }).filter(c=>c._cajas>0 || !mesFiltro);
+
+  if (sortColCli2 >= 0) {
+    clientesCalc.sort((a,b)=>{
+      const va=COLS_CLI[sortColCli2].fn(a), vb=COLS_CLI[sortColCli2].fn(b);
+      if (typeof va === 'number') return (va-vb)*sortDirCli2;
+      return va.toString().localeCompare(vb.toString())*sortDirCli2;
+    });
+  } else {
+    clientesCalc.sort((a,b)=>b._monto-a._monto);
+  }
+
+  const filasCliente = clientesCalc.map(c=>{
+    return `<tr><td>${c.nombre}</td><td>${pf(c._monto)}</td><td>${c._pedidos}</td><td>${c._cajas}</td><td>${pf(c._promMonto)}</td><td>${pf(c._ga)}</td></tr>`;
+  }).join('');
+
+  const theadCli = COLS_CLI.map((c,i)=>{
+    let cls = sortColCli2===i ? (sortDirCli2===1?'sort-asc':'sort-desc') : '';
+    return `<th class="${cls}" onclick="renderGraficos(undefined,undefined,${i},${sortColCli2===i?-sortDirCli2:1})">${c.label}</th>`;
+  }).join('');
+
+  const tituloCli = mesFiltro ? `👥 Evolución por cliente — ${fml(mesFiltro)} (clic en el mes para ver todo)` : '👥 Evolución por cliente — Total histórico';
+
+  document.getElementById('tab-graficos').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:16px;align-items:start">
+      <div class="seccion">
+        <div class="seccion-titulo">📅 Evolución por mes · tocá una fila para filtrar</div>
+        <div class="tabla-wrap">
+          <table>
+            <thead><tr>${theadMes}</tr></thead>
+            <tbody>${filasMes}${filaTotalMes}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="seccion">
+        <div class="seccion-titulo">${tituloCli}</div>
+        <div class="tabla-wrap">
+          <table>
+            <thead><tr>${theadCli}</tr></thead>
+            <tbody>${filasCliente}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ══ TAB ANALÍTICO ══
+function renderAnalitico(col, dir) {
+  if (col !== undefined) { sortCol = col; sortDir = dir; }
+  const meses8 = D.meses.slice(-8);
+
+  const COLS = [
+    {label:'Cliente',      key:'nombre',       fn:c=>c.nombre,        num:false},
+    ...meses8.map((m,i)=>({label:`${m.split(' ')[1]}/${m.split(' ')[0].slice(2)}`, key:`mes${i}`, fn:c=>Math.round(c.cajasPorMes[m]||0), num:true})),
+    {label:'Total cj',     key:'totalCajas',   fn:c=>c.totalCajas,    num:true},
+    {label:'Pedidos',      key:'nPedidos',      fn:c=>c.nPedidos,      num:true},
+    {label:'Prom cj',      key:'promCajas',    fn:c=>c.promCajas,     num:true},
+    {label:'Prom $fact',   key:'promMonto',    fn:c=>c.promMonto,     num:true},
+    {label:'GA total',     key:'totalGA',      fn:c=>c.totalGA,       num:true},
+    {label:'Frec.',        key:'frecDias',     fn:c=>c.frecDias,      num:true},
+    {label:'Último ped.',  key:'ultimoPedido', fn:c=>c.ultimoPedido,  num:false},
+    {label:'Días',         key:'diasSinPedir', fn:c=>c.diasSinPedir,  num:true},
+  ];
+
+  let clientes = [...D.clientes];
+  if (sortCol >= 0 && sortCol < COLS.length) {
+    clientes.sort((a,b)=>{
+      const va=COLS[sortCol].fn(a), vb=COLS[sortCol].fn(b);
+      if (typeof va === 'number') return (va-vb)*sortDir;
+      return va.toString().localeCompare(vb.toString())*sortDir;
+    });
+  }
+
+  const thead = COLS.map((c,i)=>{
+    let cls = '';
+    if (sortCol===i) cls = sortDir===1?'sort-asc':'sort-desc';
+    return `<th class="${cls}" onclick="renderAnalitico(${i},${sortCol===i?-sortDir:1})">${c.label}</th>`;
+  }).join('');
+
+  const tbody = clientes.map(c=>{
+    const sem = semaforo(c.diasSinPedir);
+    const n1  = c.nombre.split(' ')[0];
+    const msg = c.diasSinPedir>35
+      ? encodeURIComponent(`Hola ${n1}, cómo estás? Hace un tiempo que no tenemos noticias tuyas y quería escribirte para ver si precisabas mercadería. Quedamos a disposición. Saludos, Gonzi`)
+      : encodeURIComponent(`Hola ${n1}, cómo estás? Buenos días. Estamos organizando los pedidos de esta semana y quería saber si precisabas mercadería. Quedo atento de este lado. Saludos, Gonzi`);
+    const tel   = normTel(c.telefono);
+    const urlWA = tel ? `https://wa.me/${tel}?text=${msg}` : `https://wa.me/${WA_NUM}?text=${msg}`;
+    const mesCeldas = meses8.map(m=>{
+      const v=Math.round(c.cajasPorMes[m]||0);
+      return `<td class="${v>0?'td-val':'td-cero'}">${v>0?v:'--'}</td>`;
+    }).join('');
+    const mesesConPedido = meses8.filter(m=>(c.cajasPorMes[m]||0)>0).length;
+    const promCajasVar = mesesConPedido > 0 ? Math.round(c.totalCajas / c.nPedidos) : '--';
+    return `<tr>
+      <td>${c.nombre}</td>
+      ${mesCeldas}
+      <td><strong>${c.totalCajas}</strong></td>
+      <td>${c.nPedidos}</td>
+      <td>${promCajasVar}</td>
+      <td>${pf(c.promMonto)}</td>
+      <td>${pf(c.totalGA)}</td>
+      <td>${c.frecDias>0?'c/'+c.frecDias+'d':'--'}</td>
+      <td style="font-size:11px;color:var(--gris)">${c.ultimoPedido}</td>
+      <td><span class="sem ${sem.clase}">${sem.icono} ${c.diasSinPedir}d</span></td>
+      <td><button class="btn-wa" onclick="window.open('${urlWA}','_blank')">📱</button></td>
+    </tr>`;
+  }).join('');
+
+  const totalesMesCeldas = meses8.map(m=>{
+    const tot = clientes.reduce((acc,c)=>acc+(Math.round(c.cajasPorMes[m]||0)),0);
+    return `<td style="font-weight:700;color:var(--azul)">${tot>0?tot:'--'}</td>`;
+  }).join('');
+  const filaTotales = `<tr style="background:var(--azul-claro);font-weight:700;border-top:2px solid var(--azul)">
+    <td style="font-weight:700;color:var(--azul)">TOTALES</td>
+    ${totalesMesCeldas}
+    <td style="font-weight:700;color:var(--azul)">${clientes.reduce((acc,c)=>acc+c.totalCajas,0)}</td>
+    <td colspan="7"></td>
+  </tr>`;
+
+  document.getElementById('tab-analitico').innerHTML=`
+    <div class="seccion">
+      <div class="seccion-titulo">👥 Evolutivo por cliente -- Cajas (últimos 8 meses) · Tocá el título para ordenar</div>
+      <div class="tabla-wrap">
+        <table>
+          <thead><tr>${thead}<th></th></tr></thead>
+          <tbody>${filaTotales}${tbody}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ══ TAB MOBILE ══
+function renderMobile() {
+  const opts = D.meses.slice().reverse().map(m=>
+    `<option value="${m}" ${m===MES_SEL?'selected':''}>${fml(m)}</option>`).join('');
+  actualizarMobile();
+  document.getElementById('tab-mobile').innerHTML = `
+    <div class="filtro-mes" style="justify-content:center">
+      <label>Mes:</label>
+      <select id="mobile-mes-sel" onchange="actualizarMobile(this.value)">${opts}</select>
+    </div>
+    <div class="mobile-mes" id="mobile-mes-label">${fml(MES_SEL)}</div>
+    <div class="mobile-grid" id="mobile-cards"></div>`;
+  actualizarMobile(MES_SEL);
+}
+
+function actualizarMobile(mes) {
+  if (mes) MES_SEL = mes;
+  const idx  = D.meses.indexOf(MES_SEL);
+  const fact  = D.facturado[idx]||0, gan = D.ganancia[idx]||0;
+  const cajas = D.cajasPorMes[idx]||0, peds = D.pedidosPorMes[idx]||0;
+  const pctGA = fact > 0 ? Math.round((gan/fact)*100) : 0;
+  const saldoF = D.saldoCtaCte || 0;
+  const deboF  = saldoF < 0;
+
+  const prom3 = (key) => {
+    const vals = [];
+    for (let i = idx-1; i >= 0 && vals.length < 3; i--) vals.push(D[key][i]||0);
+    return vals.length > 0 ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+  };
+  const fProm = prom3('facturado'), gProm = prom3('ganancia');
+  const cProm = prom3('cajasPorMes'), pProm = prom3('pedidosPorMes');
+
+  const cards = [
+    {label:'💰 Facturado',    valor:pf(fact),  comp:cmpProm(fact,fProm),  color:''},
+    {label:'📈 Ganancia',     valor:pf(gan),   comp:cmpProm(gan,gProm),   color:'verde'},
+    {label:'📦 Cajas',        valor:cajas,     comp:cmpProm(cajas,cProm), color:''},
+    {label:'🧾 Pedidos',      valor:peds,      comp:cmpProm(peds,pProm),  color:''},
+    {label:'📊 % GA',         valor:pctGA+'%', comp:{texto:'sobre facturado',clase:''}, color:'amarillo'},
+    {label:'💵 Saldo fábrica',valor:pf(Math.abs(saldoF)),comp:{texto:deboF?'Le debés':'A tu favor',clase:deboF?'baja':'sube'}, color:deboF?'rojo':'verde'},
+  ].map(c=>`
+    <div class="mobile-card ${c.color}">
+      <div class="mobile-card-label">${c.label}</div>
+      <div class="mobile-card-valor">${c.valor}</div>
+      <div class="mobile-card-comp ${c.comp.clase}">${c.comp.texto}</div>
+    </div>`).join('');
+
+  const label = document.getElementById('mobile-mes-label');
+  if (label) label.textContent = fml(MES_SEL);
+  const cont = document.getElementById('mobile-cards');
+  if (cont) cont.innerHTML = cards;
+
+  const sel = document.getElementById('mobile-mes-sel');
+  if (sel) sel.value = MES_SEL;
+}
+
+// ══ HELPERS ══
+function kpi(l,v,c){return `<div class="kpi"><div class="kpi-label">${l}</div><div class="kpi-valor">${v}</div><div class="kpi-comp ${c.clase}">${c.texto}</div></div>`;}
+function kpiSaldo(saldo){
+  saldo = saldo || 0;
+  var debo = saldo < 0;
+  var color = debo ? 'var(--rojo)' : 'var(--verde-ok)';
+  var texto = debo ? 'Le debés a fábrica' : 'A tu favor';
+  return `<div class="kpi" style="border-left-color:${color}">
+    <div class="kpi-label">💰 Saldo fábrica</div>
+    <div class="kpi-valor" style="color:${color}">${pf(Math.abs(saldo))}</div>
+    <div class="kpi-comp" style="color:${color};font-weight:600">${texto}</div>
+  </div>`;
+}
+function cmp(a,b){
+  if(b===null||b===undefined)return{texto:'--',clase:''};
+  if(b===0)return{texto:'Sin dato mes ant.',clase:''};
+  const p=Math.round(((a-b)/b)*100);
+  return{texto:`${p>=0?'▲':'▼'} ${Math.abs(p)}% vs mes ant.`,clase:p>=0?'sube':'baja'};
+}
+function cmpProm(a,b){
+  if(b===null||b===undefined)return{texto:'--',clase:''};
+  if(b===0)return{texto:'Sin dato prom.',clase:''};
+  const p=Math.round(((a-b)/b)*100);
+  return{texto:`${p>=0?'▲':'▼'} ${Math.abs(p)}% vs prom. 3m`,clase:p>=0?'sube':'baja'};
+}
+function semaforo(d){if(d<=20)return{clase:'verde',icono:'●'};if(d<=35)return{clase:'amarillo',icono:'●'};return{clase:'rojo',icono:'●'};}
+function pf(n){if(!n)return '$0';return '$'+Math.round(n).toLocaleString('es-AR');}
+function pk(n){if(!n||n===0)return '';if(n>=1000000)return '$'+(n/1000000).toFixed(1)+'M';if(n>=1000)return '$'+Math.round(n/1000)+'k';return '$'+Math.round(n);}
+function fml(m){if(!m)return '';const ms=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];const p=m.split(' ');return `${ms[parseInt(p[1])]} ${p[0]}`;}
+function normTel(t){if(!t)return null;let n=t.toString().replace(/\D/g,'');if(n.startsWith('549'))return n;if(n.startsWith('54'))return n;if(n.startsWith('0'))return '54'+n.slice(1);return '549'+n;}
+</script>
+</body>
+</html>
