@@ -407,6 +407,7 @@ function actualizarMobile(mes) {
   const saldoF = D.saldoCtaCte || 0;
   const deboF  = saldoF < 0;
   const tr = (D.transferencias && D.transferencias[MES_SEL]) || {gonza:0, belu:0, otro:0};
+  const cot = (D.cotizado && D.cotizado[MES_SEL]) || 0;
   const otroTxt = tr.otro > 0 ? ' · Otros ' + pf(tr.otro) : '';
 
   const prom3 = (key) => {
@@ -418,7 +419,7 @@ function actualizarMobile(mes) {
   const cProm = prom3('cajasPorMes'), pProm = prom3('pedidosPorMes');
 
   const cards = [
-    {label:'💰 Facturado',    valor:pf(fact),  comp:cmpProm(fact,fProm),  color:''},
+    {label:'💰 Facturado',    valor:pf(fact),  comp:{texto:cmpProm(fact,fProm).texto+(cot>0?'<br>🕓 Cotizado pend. '+pf(cot):''),clase:cmpProm(fact,fProm).clase}, color:''},
     {label:'📈 Ganancia / % GA', valor:pf(gan)+' / '+pctGA+'%', comp:cmpProm(gan,gProm), color:'verde'},
     {label:'📦 Cajas / Pedidos', valor:cajas+' / '+peds, comp:{texto:cmpProm(cajas,cProm).texto+' (cajas)',clase:cmpProm(cajas,cProm).clase}, color:''},
     {label:'💵 Saldo fábrica',valor:pf(Math.abs(saldoF)),comp:{texto:deboF?'Le debés':'A tu favor',clase:deboF?'baja':'sube'}, color:deboF?'rojo':'verde'},
