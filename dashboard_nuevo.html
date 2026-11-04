@@ -111,9 +111,11 @@ tbody tr:hover td:first-child{background:var(--azul-claro);}
     <div class="tab activo" onclick="mostrarTab('mobile')">📱 KPIs</div>
     <div class="tab" onclick="mostrarTab('graficos')">📊 Evolutivo</div>
     <div class="tab" onclick="mostrarTab('analitico')">📋 Analítico</div>
+    <div class="tab" onclick="mostrarTab('margenes')">💸 Márgenes</div>
   </div>
   <div id="tab-graficos" style="display:none"></div>
   <div id="tab-analitico" style="display:none"></div>
+  <div id="tab-margenes" style="display:none"></div>
   <div id="tab-mobile"><div class="loading"><div class="spinner"></div><p>Cargando datos...</p></div></div>
 </div>
 
@@ -180,6 +182,7 @@ window.onload = async function() {
     renderGraficos();
     renderAnalitico();
     renderMobile();
+    renderMargenes();
   } catch(e) {
     document.getElementById('tab-graficos').innerHTML =
       `<div style="color:var(--rojo);padding:20px;background:#fff;border-radius:10px">
@@ -189,8 +192,8 @@ window.onload = async function() {
 };
 
 function mostrarTab(t) {
-  ['graficos','analitico','mobile'].forEach(id=>document.getElementById('tab-'+id).style.display=id===t?'':'none');
-  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('activo',['mobile','graficos','analitico'][i]===t));
+  ['graficos','analitico','margenes','mobile'].forEach(id=>document.getElementById('tab-'+id).style.display=id===t?'':'none');
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('activo',['mobile','graficos','analitico','margenes'][i]===t));
 }
 
 // ══ TAB GRÁFICOS ══
@@ -406,9 +409,9 @@ function actualizarMobile(mes) {
   const pctGA = fact > 0 ? Math.round((gan/fact)*100) : 0;
   const saldoF = D.saldoCtaCte || 0;
   const deboF  = saldoF < 0;
-  const tr = (D.transferencias && D.transferencias[MES_SEL]) || {gonza:0, belu:0, otro:0};
+  const tr = Object.assign({gonza:0, belu:0, otro:0, efectivo:0}, (D.transferencias && D.transferencias[MES_SEL]) || {});
+  const comMes = (D.pedidosDetalle || []).filter(p=>p.mes===MES_SEL).reduce((a,p)=>a+(p.comision||0),0);
   const cot = (D.cotizado && D.cotizado[MES_SEL]) || 0;
-  const otroTxt = tr.otro > 0 ? ' · Otros ' + pf(tr.otro) : '';
 
   const prom3 = (key) => {
     const vals = [];
@@ -423,8 +426,10 @@ function actualizarMobile(mes) {
     {label:'📈 Ganancia / % GA', valor:pf(gan)+' / '+pctGA+'%', comp:cmpProm(gan,gProm), color:'verde'},
     {label:'📦 Cajas / Pedidos', valor:cajas+' / '+peds, comp:{texto:cmpProm(cajas,cProm).texto+' (cajas)',clase:cmpProm(cajas,cProm).clase}, color:''},
     {label:'💵 Saldo fábrica',valor:pf(Math.abs(saldoF)),comp:{texto:deboF?'Le debés':'A tu favor',clase:deboF?'baja':'sube'}, color:deboF?'rojo':'verde'},
-    {label:'🏦 Transf. Gonza',valor:pf(tr.gonza),comp:{texto:'acumulado del mes'+otroTxt,clase:''}, color:''},
+    {label:'🏦 Transf. Gonza',valor:pf(tr.gonza),comp:{texto:'acumulado del mes',clase:''}, color:''},
     {label:'🏦 Transf. Belu', valor:pf(tr.belu), comp:{texto:'acumulado del mes',clase:''}, color:''},
+    {label:'💵 Efectivo',     valor:pf(tr.efectivo), comp:{texto:'acumulado del mes',clase:''}, color:''},
+    {label:'🏦 Transf. a otro', valor:pf(tr.otro), comp:{texto:comMes>0?'Comisión 3%: '+pf(comMes):'acumulado del mes',clase:comMes>0?'baja':''}, color:comMes>0?'amarillo':''},
   ].map(c=>`
     <div class="mobile-card ${c.color}">
       <div class="mobile-card-label">${c.label}</div>
@@ -439,6 +444,86 @@ function actualizarMobile(mes) {
 
   const sel = document.getElementById('mobile-mes-sel');
   if (sel) sel.value = MES_SEL;
+}
+
+
+// ══ TAB MÁRGENES ══
+let MG_MES = 'TODOS', MG_CLI = 'TODOS';
+function renderMargenes(mes, cli) {
+  if (mes !== undefined) MG_MES = mes;
+  if (cli !== undefined) MG_CLI = cli;
+  const cont = document.getElementById('tab-margenes');
+  const det = D.pedidosDetalle;
+  if (!det || !det.length) {
+    cont.innerHTML = `<div class="seccion"><div class="seccion-titulo">💸 Márgenes</div>
+      <p style="font-size:13px;color:var(--gris)">Todavía no hay datos de detalle por pedido. Publicá la nueva versión del script (web app) para verlos.${D.errorDetalle?'<br><br>Error: '+D.errorDetalle:''}</p></div>`;
+    return;
+  }
+  const meses = Array.from(new Set(det.map(p=>p.mes))).sort().reverse();
+  const clientes = Array.from(new Set(det.map(p=>p.cliente||'(sin cliente)'))).sort((a,b)=>a.localeCompare(b));
+  if (MG_MES !== 'TODOS' && meses.indexOf(MG_MES) < 0) MG_MES = 'TODOS';
+  if (MG_CLI !== 'TODOS' && clientes.indexOf(MG_CLI) < 0) MG_CLI = 'TODOS';
+
+  const f = det.filter(p => (MG_MES==='TODOS'||p.mes===MG_MES) && (MG_CLI==='TODOS'||(p.cliente||'(sin cliente)')===MG_CLI));
+  const suma = (arr,k)=>arr.reduce((a,p)=>a+(p[k]||0),0);
+  const agg = arr => {
+    const bruto=suma(arr,'bruto'), costo=suma(arr,'costo'), gan=suma(arr,'ganancia');
+    return {n:arr.length, bruto, costo, envio:suma(arr,'envio'), bonif:suma(arr,'bonif'), comision:suma(arr,'comision'), gan,
+      mi: bruto>0 ? (bruto-costo)/bruto*100 : 0, mf: bruto>0 ? gan/bruto*100 : 0};
+  };
+  const T = agg(f);
+  const pct = x => (Math.round(x*10)/10).toLocaleString('es-AR')+'%';
+  const dif = T.mi - T.mf;
+  const gastos = T.envio + T.bonif + T.comision;
+
+  const optM = `<option value="TODOS">Todos</option>` + meses.map(m=>`<option value="${m}" ${m===MG_MES?'selected':''}>${fml(m)}</option>`).join('');
+  const optC = `<option value="TODOS">Todos</option>` + clientes.map(c=>`<option value="${c.replace(/"/g,'&quot;')}" ${c===MG_CLI?'selected':''}>${c}</option>`).join('');
+
+  const k = (l,v,c,col) => `<div class="mobile-card ${col||''}"><div class="mobile-card-label">${l}</div><div class="mobile-card-valor">${v}</div><div class="mobile-card-comp ${c.clase||''}">${c.texto||''}</div></div>`;
+  const cards = [
+    k('🧾 Pedidos', T.n, {texto:'en el filtro'}),
+    k('💰 Venta bruta', pf(T.bruto), {texto:'total de remitos'}),
+    k('🚚 Envío', pf(T.envio), {texto:T.bruto>0?pct(T.envio/T.bruto*100)+' de la venta':'' }, T.envio>0?'amarillo':''),
+    k('🎁 Bonificación', pf(T.bonif), {texto:T.bruto>0?pct(T.bonif/T.bruto*100)+' de la venta':'' }, T.bonif>0?'amarillo':''),
+    k('🏦 Comisión', pf(T.comision), {texto:T.bruto>0?pct(T.comision/T.bruto*100)+' de la venta':'' }, T.comision>0?'amarillo':''),
+    k('📈 Ganancia neta', pf(T.gan), {texto:'después de envío, bonif. y comisión'}, 'verde'),
+    k('🎯 Margen inicial', pct(T.mi), {texto:'antes de gastos'}),
+    k('📉 Margen final', pct(T.mf), {texto:T.n? '▼ '+pct(dif)+' perdidos por gastos ('+pf(gastos)+')':'', clase:dif>0.05?'baja':'sube'}, T.mf>=T.mi-0.05?'verde':(T.mf>=T.mi-5?'amarillo':'rojo')),
+  ].join('');
+
+  // tabla por cliente
+  const porCli = {};
+  f.forEach(p => { const c = p.cliente||'(sin cliente)'; (porCli[c] = porCli[c]||[]).push(p); });
+  const filasCli = Object.keys(porCli).map(c=>({c, ...agg(porCli[c])})).sort((a,b)=>b.bruto-a.bruto);
+  const tdMf = x => `<td class="td-val" style="color:${x.mf>=x.mi-0.05?'var(--verde-ok)':(x.mf>=x.mi-5?'var(--amarillo)':'var(--rojo-sem)')}">${pct(x.mf)}</td>`;
+  const tbCli = filasCli.map(x=>`<tr style="cursor:pointer" onclick="renderMargenes(undefined,'${x.c.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">
+    <td>${x.c}</td><td>${x.n}</td><td class="td-val">${pf(x.bruto)}</td><td>${pf(x.envio)}</td><td>${pf(x.bonif)}</td><td>${pf(x.comision)}</td>
+    <td class="td-val">${pf(x.gan)}</td><td>${pct(x.mi)}</td>${tdMf(x)}<td>${x.bruto>0?pct((x.envio+x.bonif+x.comision)/x.bruto*100):'-'}</td></tr>`).join('');
+  const totRow = `<tr class="fila-activa"><td>TOTAL</td><td>${T.n}</td><td>${pf(T.bruto)}</td><td>${pf(T.envio)}</td><td>${pf(T.bonif)}</td><td>${pf(T.comision)}</td><td>${pf(T.gan)}</td><td>${pct(T.mi)}</td><td>${pct(T.mf)}</td><td>${T.bruto>0?pct(gastos/T.bruto*100):'-'}</td></tr>`;
+
+  // detalle de pedidos
+  const tbPed = f.slice(0,150).map(p=>`<tr><td>${p.n}</td><td>${p.fecha}</td><td style="text-align:left">${p.cliente||''}</td>
+    <td class="td-val">${pf(p.bruto)}</td><td>${pf(p.envio)}</td><td>${pf(p.bonif)}</td><td>${pf(p.comision)}</td><td class="td-val">${pf(p.ganancia)}</td>
+    <td>${pct(p.margenInicial)}</td><td>${pct(p.margenFinal)}</td><td>${p.medio||'-'}${p.quien?' · '+p.quien:''}</td></tr>`).join('');
+
+  cont.innerHTML = `
+    <div class="filtro-mes">
+      <label>Mes:</label><select onchange="renderMargenes(this.value,undefined)">${optM}</select>
+      <label>Cliente:</label><select onchange="renderMargenes(undefined,this.value)">${optC}</select>
+    </div>
+    <div class="mobile-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:18px">${cards}</div>
+    <div class="seccion">
+      <div class="seccion-titulo">👥 Por cliente · tocá una fila para filtrar</div>
+      <div class="tabla-wrap"><table>
+        <thead><tr><th style="cursor:default">Cliente</th><th style="cursor:default">Pedidos</th><th style="cursor:default">Venta bruta</th><th style="cursor:default">Envío</th><th style="cursor:default">Bonif.</th><th style="cursor:default">Comisión</th><th style="cursor:default">Ganancia neta</th><th style="cursor:default">Margen ini.</th><th style="cursor:default">Margen final</th><th style="cursor:default">Gastos/venta</th></tr></thead>
+        <tbody>${totRow}${tbCli}</tbody></table></div>
+    </div>
+    <div class="seccion">
+      <div class="seccion-titulo">🧾 Pedidos${f.length>150?' (últimos 150)':''}</div>
+      <div class="tabla-wrap"><table>
+        <thead><tr><th style="cursor:default">Remito</th><th style="cursor:default">Fecha</th><th style="cursor:default">Cliente</th><th style="cursor:default">Venta bruta</th><th style="cursor:default">Envío</th><th style="cursor:default">Bonif.</th><th style="cursor:default">Comisión</th><th style="cursor:default">Ganancia</th><th style="cursor:default">Margen ini.</th><th style="cursor:default">Margen final</th><th style="cursor:default">Pago</th></tr></thead>
+        <tbody>${tbPed}</tbody></table></div>
+    </div>`;
 }
 
 // ══ HELPERS ══
