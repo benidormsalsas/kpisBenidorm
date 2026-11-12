@@ -51,7 +51,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--gris-bg);color:var(--text
 .barra.cajas.activo{opacity:1;}
 .barra-monto{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:8px;font-weight:700;white-space:nowrap;color:var(--texto);}
 .barra-label{font-size:9px;color:var(--gris);text-align:center;}
-.tabla-wrap{overflow-x:auto;}
+.tabla-wrap{overflow-x:scroll;-webkit-overflow-scrolling:touch;padding-bottom:4px;scrollbar-width:auto;scrollbar-color:var(--azul) var(--azul-claro);}
+.tabla-wrap::-webkit-scrollbar{height:12px;}
+.tabla-wrap::-webkit-scrollbar-track{background:var(--azul-claro);border-radius:6px;}
+.tabla-wrap::-webkit-scrollbar-thumb{background:var(--azul);border-radius:6px;}
 table{width:100%;border-collapse:collapse;font-size:12px;}
 thead tr{background:var(--azul);}
 thead th{padding:9px 11px;text-align:center;font-weight:600;font-size:10px;white-space:nowrap;color:#fff;font-family:'Montserrat',sans-serif;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;user-select:none;}
@@ -73,6 +76,14 @@ tbody tr:hover td:first-child{background:var(--azul-claro);}
 .sem.rojo{background:var(--rojo-bg);color:var(--rojo-sem);}
 .btn-wa{background:#25d366;color:#fff;border:none;border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;font-weight:600;}
 .btn-wa:hover{background:#1ea952;}
+.alerta-nuevos{background:var(--verde-bg);border:2px solid var(--verde-ok);border-radius:var(--radio);padding:14px 16px;margin-bottom:18px;}
+.alerta-nuevos-titulo{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:var(--verde-ok);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.alerta-fila{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid rgba(22,163,74,.25);flex-wrap:wrap;}
+.alerta-fila:first-of-type{border-top:none;}
+.alerta-txt{font-size:13px;}
+.alerta-txt small{color:var(--gris);display:block;font-size:11px;}
+.alerta-acc{display:flex;gap:6px;}
+.btn-ya{background:#fff;color:var(--gris);border:1px solid var(--gris-borde);border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;}
 .mobile-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .mobile-card{background:#fff;border-radius:14px;padding:20px 18px;box-shadow:0 2px 8px rgba(34,73,122,.1);border-top:4px solid var(--azul);position:relative;overflow:hidden;}
 .mobile-card.verde{border-top-color:var(--verde-ok);}
@@ -304,11 +315,11 @@ function renderGraficos(colMes, dirMes, colCli, dirCli, mesClick) {
 // ══ TAB ANALÍTICO ══
 function renderAnalitico(col, dir) {
   if (col !== undefined) { sortCol = col; sortDir = dir; }
-  const meses8 = D.meses.slice(-8);
+  const meses6 = D.meses.slice(-6);
 
   const COLS = [
     {label:'Cliente',      key:'nombre',       fn:c=>c.nombre,        num:false},
-    ...meses8.map((m,i)=>({label:`${m.split(' ')[1]}/${m.split(' ')[0].slice(2)}`, key:`mes${i}`, fn:c=>Math.round(c.cajasPorMes[m]||0), num:true})),
+    ...meses6.map((m,i)=>({label:`${m.split(' ')[1]}/${m.split(' ')[0].slice(2)}`, key:`mes${i}`, fn:c=>Math.round(c.cajasPorMes[m]||0), num:true})),
     {label:'Total cj',     key:'totalCajas',   fn:c=>c.totalCajas,    num:true},
     {label:'Pedidos',      key:'nPedidos',      fn:c=>c.nPedidos,      num:true},
     {label:'Prom cj',      key:'promCajas',    fn:c=>c.promCajas,     num:true},
@@ -342,11 +353,11 @@ function renderAnalitico(col, dir) {
       : encodeURIComponent(`Hola ${n1}, cómo estás? Buenos días. Estamos organizando los pedidos de esta semana y quería saber si precisabas mercadería. Quedo atento de este lado. Saludos, Gonzi`);
     const tel   = normTel(c.telefono);
     const urlWA = tel ? `https://wa.me/${tel}?text=${msg}` : `https://wa.me/${WA_NUM}?text=${msg}`;
-    const mesCeldas = meses8.map(m=>{
+    const mesCeldas = meses6.map(m=>{
       const v=Math.round(c.cajasPorMes[m]||0);
       return `<td class="${v>0?'td-val':'td-cero'}">${v>0?v:'--'}</td>`;
     }).join('');
-    const mesesConPedido = meses8.filter(m=>(c.cajasPorMes[m]||0)>0).length;
+    const mesesConPedido = meses6.filter(m=>(c.cajasPorMes[m]||0)>0).length;
     const promCajasVar = mesesConPedido > 0 ? Math.round(c.totalCajas / c.nPedidos) : '--';
     return `<tr>
       <td>${c.nombre}</td>
@@ -363,7 +374,7 @@ function renderAnalitico(col, dir) {
     </tr>`;
   }).join('');
 
-  const totalesMesCeldas = meses8.map(m=>{
+  const totalesMesCeldas = meses6.map(m=>{
     const tot = clientes.reduce((acc,c)=>acc+(Math.round(c.cajasPorMes[m]||0)),0);
     return `<td style="font-weight:700;color:var(--azul)">${tot>0?tot:'--'}</td>`;
   }).join('');
@@ -375,8 +386,9 @@ function renderAnalitico(col, dir) {
   </tr>`;
 
   document.getElementById('tab-analitico').innerHTML=`
+    ${htmlAlertaNuevos()}
     <div class="seccion">
-      <div class="seccion-titulo">👥 Evolutivo por cliente -- Cajas (últimos 8 meses) · Tocá el título para ordenar</div>
+      <div class="seccion-titulo">👥 Evolutivo por cliente -- Cajas (últimos 6 meses) · Tocá el título para ordenar · Deslizá hacia la derecha para ver más</div>
       <div class="tabla-wrap">
         <table>
           <thead><tr>${thead}<th></th></tr></thead>
@@ -384,6 +396,77 @@ function renderAnalitico(col, dir) {
         </table>
       </div>
     </div>`;
+}
+
+
+// ══ ALERTA: CLIENTES NUEVOS BUENOS (seguimiento "mimo") ══
+// Cliente grande y nuevo: primer pedido hace 1 o 2 meses, 40+ cajas ese primer mes, y pocos pedidos en total.
+const UMBRAL_NUEVO_CAJAS = 40;   // cajas en el mes de su primer pedido
+const MESES_ATRAS_MAX    = 2;    // primer pedido hace 1 o 2 meses
+const MAX_PEDIDOS_NUEVO  = 3;    // hasta 3 pedidos en total
+function clavesAvisados() {
+  try { return JSON.parse(localStorage.getItem('benidorm_avisados') || '[]'); } catch(e) { return []; }
+}
+// Mes del primer pedido (primer mes con cajas). El primer mes del historial se ignora: puede ser un cliente viejo.
+function primerMesCliente(c) {
+  if (Math.round(c.cajasPorMes[D.meses[0]] || 0) > 0) return null;
+  for (let i = 1; i < D.meses.length; i++) {
+    if (Math.round(c.cajasPorMes[D.meses[i]] || 0) > 0) return D.meses[i];
+  }
+  return null;
+}
+function nuevosBuenos() {
+  const avisados = clavesAvisados();
+  const iActual = D.meses.indexOf(D.mesActual.mes);
+  const res = [];
+  (D.clientes || []).forEach(c => {
+    const m = primerMesCliente(c);
+    if (!m) return;
+    const atras = iActual - D.meses.indexOf(m);
+    if (atras < 1 || atras > MESES_ATRAS_MAX) return;
+    if (c.nPedidos > MAX_PEDIDOS_NUEVO) return;
+    const cajas = Math.round(c.cajasPorMes[m] || 0);
+    if (cajas < UMBRAL_NUEVO_CAJAS) return;
+    if (avisados.indexOf(c.nombre + '|' + m) >= 0) return;
+    res.push(Object.assign({}, c, {_primerMes: m, _cajas1: cajas}));
+  });
+  return res;
+}
+function urlSeguimiento(c) {
+  const n1 = c.nombre.split(' ')[0];
+  const txt = `Hola ${n1}, cómo estás? Quería saber cómo te está yendo con la mercadería que te llevaste y si te quedó todo bien. Cualquier cosa que necesites, quedo atento. Saludos, Gonzi`;
+  const tel = normTel(c.telefono);
+  return tel ? `https://wa.me/${tel}?text=${encodeURIComponent(txt)}` : null;
+}
+function htmlAlertaNuevos() {
+  if (!D) return '';
+  const lista = nuevosBuenos();
+  if (!lista.length) return '';
+  const filas = lista.map((c,i) => {
+    const url = urlSeguimiento(c);
+    return `<div class="alerta-fila">
+      <div class="alerta-txt"><strong>${c.nombre}</strong> · cliente nuevo de ${fml(c._primerMes)}
+        <small>${c._cajas1} cajas en su primer mes · ${c.nPedidos} pedido${c.nPedidos>1?'s':''} en total · último pedido ${c.ultimoPedido}</small></div>
+      <div class="alerta-acc">
+        ${url ? `<button class="btn-wa" onclick="enviarSeguimiento(${i})">📱 Preguntar cómo le va</button>` : `<span style="font-size:11px;color:var(--gris)">sin teléfono</span>`}
+        <button class="btn-ya" onclick="marcarAvisado(${i})">Ya le escribí</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="alerta-nuevos">
+    <div class="alerta-nuevos-titulo">🔔 Clientes nuevos buenos — preguntales cómo les va con la mercadería</div>${filas}</div>`;
+}
+function marcarAvisado(i) {
+  const c = nuevosBuenos()[i]; if (!c) return;
+  const av = clavesAvisados(); av.push(c.nombre + '|' + c._primerMes);
+  try { localStorage.setItem('benidorm_avisados', JSON.stringify(av)); } catch(e) {}
+  renderMobile(); renderAnalitico();
+}
+function enviarSeguimiento(i) {
+  const c = nuevosBuenos()[i]; if (!c) return;
+  const url = urlSeguimiento(c); if (!url) return;
+  window.open(url, '_blank');
+  marcarAvisado(i);
 }
 
 // ══ TAB MOBILE ══
@@ -396,6 +479,7 @@ function renderMobile() {
       <label>Mes:</label>
       <select id="mobile-mes-sel" onchange="actualizarMobile(this.value)">${opts}</select>
     </div>
+    ${htmlAlertaNuevos()}
     <div class="mobile-mes" id="mobile-mes-label">${fml(MES_SEL)}</div>
     <div class="mobile-grid" id="mobile-cards"></div>`;
   actualizarMobile(MES_SEL);
