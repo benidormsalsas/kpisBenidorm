@@ -552,13 +552,17 @@ function renderMargenes(mes, cli) {
   const suma = (arr,k)=>arr.reduce((a,p)=>a+(p[k]||0),0);
   const agg = arr => {
     const bruto=suma(arr,'bruto'), costo=suma(arr,'costo'), gan=suma(arr,'ganancia');
-    return {n:arr.length, bruto, costo, envio:suma(arr,'envio'), bonif:suma(arr,'bonif'), comision:suma(arr,'comision'), gan,
+    // Envío negativo = envío cobrado al cliente (ingreso, suma a la GA). Envío positivo = costo que pagaste vos.
+    const envioCosto = arr.reduce((a,p)=>a+Math.max(p.envio||0,0),0);
+    const envioCobrado = arr.reduce((a,p)=>a+Math.max(-(p.envio||0),0),0);
+    return {n:arr.length, bruto, costo, envio:suma(arr,'envio'), envioCosto, envioCobrado, bonif:suma(arr,'bonif'), comision:suma(arr,'comision'), gan,
       mi: bruto>0 ? (bruto-costo)/bruto*100 : 0, mf: bruto>0 ? gan/bruto*100 : 0};
   };
   const T = agg(f);
   const pct = x => (Math.round(x*10)/10).toLocaleString('es-AR')+'%';
   const dif = T.mi - T.mf;
-  const gastos = T.envio + T.bonif + T.comision;
+  const gastos = T.envioCosto + T.bonif + T.comision;
+  const fEnvio = (costo,cobrado) => (cobrado>0 ? `<span style="color:var(--verde-ok);font-weight:600">+${pf(cobrado)} cobrado</span>` : '') + (cobrado>0&&costo>0 ? '<br>' : '') + ((costo>0||cobrado===0) ? pf(costo) : '');
 
   const optM = `<option value="TODOS">Todos</option>` + meses.map(m=>`<option value="${m}" ${m===MG_MES?'selected':''}>${fml(m)}</option>`).join('');
   const optC = `<option value="TODOS">Todos</option>` + clientes.map(c=>`<option value="${c.replace(/"/g,'&quot;')}" ${c===MG_CLI?'selected':''}>${c}</option>`).join('');
@@ -567,10 +571,11 @@ function renderMargenes(mes, cli) {
   const cards = [
     k('🧾 Pedidos', T.n, {texto:'en el filtro'}),
     k('💰 Venta bruta', pf(T.bruto), {texto:'total de remitos'}),
-    k('🚚 Envío', pf(T.envio), {texto:T.bruto>0?pct(T.envio/T.bruto*100)+' de la venta':'' }, T.envio>0?'amarillo':''),
+    k('🚚 Envío (costo)', pf(T.envioCosto), {texto:T.bruto>0?pct(T.envioCosto/T.bruto*100)+' de la venta':'' }, T.envioCosto>0?'amarillo':''),
+    k('📦 Envío cobrado', pf(T.envioCobrado), {texto:'ingreso, suma a la GA', clase:T.envioCobrado>0?'sube':''}, T.envioCobrado>0?'verde':''),
     k('🎁 Bonificación', pf(T.bonif), {texto:T.bruto>0?pct(T.bonif/T.bruto*100)+' de la venta':'' }, T.bonif>0?'amarillo':''),
     k('🏦 Comisión', pf(T.comision), {texto:T.bruto>0?pct(T.comision/T.bruto*100)+' de la venta':'' }, T.comision>0?'amarillo':''),
-    k('📈 Ganancia neta', pf(T.gan), {texto:'después de envío, bonif. y comisión'}, 'verde'),
+    k('📈 Ganancia neta', pf(T.gan), {texto:'después de gastos'+(T.envioCobrado>0?' · incluye '+pf(T.envioCobrado)+' de envío cobrado':'')}, 'verde'),
     k('🎯 Margen inicial', pct(T.mi), {texto:'antes de gastos'}),
     k('📉 Margen final', pct(T.mf), {texto:T.n? '▼ '+pct(dif)+' perdidos por gastos ('+pf(gastos)+')':'', clase:dif>0.05?'baja':'sube'}, T.mf>=T.mi-0.05?'verde':(T.mf>=T.mi-5?'amarillo':'rojo')),
   ].join('');
@@ -581,13 +586,13 @@ function renderMargenes(mes, cli) {
   const filasCli = Object.keys(porCli).map(c=>({c, ...agg(porCli[c])})).sort((a,b)=>b.bruto-a.bruto);
   const tdMf = x => `<td class="td-val" style="color:${x.mf>=x.mi-0.05?'var(--verde-ok)':(x.mf>=x.mi-5?'var(--amarillo)':'var(--rojo-sem)')}">${pct(x.mf)}</td>`;
   const tbCli = filasCli.map(x=>`<tr style="cursor:pointer" onclick="renderMargenes(undefined,'${x.c.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">
-    <td>${x.c}</td><td>${x.n}</td><td class="td-val">${pf(x.bruto)}</td><td>${pf(x.envio)}</td><td>${pf(x.bonif)}</td><td>${pf(x.comision)}</td>
-    <td class="td-val">${pf(x.gan)}</td><td>${pct(x.mi)}</td>${tdMf(x)}<td>${x.bruto>0?pct((x.envio+x.bonif+x.comision)/x.bruto*100):'-'}</td></tr>`).join('');
-  const totRow = `<tr class="fila-activa"><td>TOTAL</td><td>${T.n}</td><td>${pf(T.bruto)}</td><td>${pf(T.envio)}</td><td>${pf(T.bonif)}</td><td>${pf(T.comision)}</td><td>${pf(T.gan)}</td><td>${pct(T.mi)}</td><td>${pct(T.mf)}</td><td>${T.bruto>0?pct(gastos/T.bruto*100):'-'}</td></tr>`;
+    <td>${x.c}</td><td>${x.n}</td><td class="td-val">${pf(x.bruto)}</td><td>${fEnvio(x.envioCosto,x.envioCobrado)}</td><td>${pf(x.bonif)}</td><td>${pf(x.comision)}</td>
+    <td class="td-val">${pf(x.gan)}</td><td>${pct(x.mi)}</td>${tdMf(x)}<td>${x.bruto>0?pct((x.envioCosto+x.bonif+x.comision)/x.bruto*100):'-'}</td></tr>`).join('');
+  const totRow = `<tr class="fila-activa"><td>TOTAL</td><td>${T.n}</td><td>${pf(T.bruto)}</td><td>${fEnvio(T.envioCosto,T.envioCobrado)}</td><td>${pf(T.bonif)}</td><td>${pf(T.comision)}</td><td>${pf(T.gan)}</td><td>${pct(T.mi)}</td><td>${pct(T.mf)}</td><td>${T.bruto>0?pct(gastos/T.bruto*100):'-'}</td></tr>`;
 
   // detalle de pedidos
   const tbPed = f.slice(0,150).map(p=>`<tr><td>${p.n}</td><td>${p.fecha}</td><td style="text-align:left">${p.cliente||''}</td>
-    <td class="td-val">${pf(p.bruto)}</td><td>${pf(p.envio)}</td><td>${pf(p.bonif)}</td><td>${pf(p.comision)}</td><td class="td-val">${pf(p.ganancia)}</td>
+    <td class="td-val">${pf(p.bruto)}</td><td>${fEnvio(Math.max(p.envio||0,0),Math.max(-(p.envio||0),0))}</td><td>${pf(p.bonif)}</td><td>${pf(p.comision)}</td><td class="td-val">${pf(p.ganancia)}</td>
     <td>${pct(p.margenInicial)}</td><td>${pct(p.margenFinal)}</td><td>${p.medio||'-'}${p.quien?' · '+p.quien:''}</td></tr>`).join('');
 
   cont.innerHTML = `
